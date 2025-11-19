@@ -6,9 +6,9 @@ const router = require('./routes')
 const server = express()
 
 //* Middlewares */
-server.use(morgan('dev'))
-server.use(cors())
-server.use(express.json())
+server.use(morgan('dev'));
+server.use(cors());
+server.use(express.json());
 
 server.use(router)
 
