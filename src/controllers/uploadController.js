@@ -22,7 +22,7 @@ exports.uploadVideo = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No se envió ningún archivo" });
 
-    const fileContent = fs.readFileSync(req.file.path);
+    const fileContent = req.file.buffer; // ⬅️ ahora viene de memoria
 
     const fileName = `${Date.now()}-${req.file.originalname}`;
     const params = {
@@ -33,20 +33,19 @@ exports.uploadVideo = async (req, res) => {
     };
 
     const data = await s3.upload(params).promise();
-    fs.unlinkSync(req.file.path);
 
     // 🔹 Guardar en la base de datos
     const newVideo = new Videos({
       title: req.body.title || req.file.originalname,
       url: `${publicBase}/${params.Key}`,
-      key: params.Key, // lo guardamos por si después querés borrar el video de R2
+      key: params.Key,
       slider: req.body.slider || null,
     });
 
     await newVideo.save();
 
     res.json({
-      message: "✅ Video subido correctamente",
+      message: "✅ Video subido correctamente a Cloudflare R2",
       video: newVideo,
     });
   } catch (error) {
