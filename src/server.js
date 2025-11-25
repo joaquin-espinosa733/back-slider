@@ -7,7 +7,7 @@ const server = express()
 
 //* Middlewares */
 server.use(morgan('dev'));
-app.use(cors({
+server.use(cors({
     origin: ["https://novedades-three.vercel.app", "http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "DELETE"],
 }));
