@@ -17,7 +17,7 @@ server.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
 }));
 
-server.options("*", cors()); // <- va DESPUÉS del cors principal
+// server.options("*", cors()); // <- va DESPUÉS del cors principal
 
 server.use(express.json());
 
