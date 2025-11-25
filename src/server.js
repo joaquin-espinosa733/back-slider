@@ -5,9 +5,9 @@ const router = require('./routes')
 
 const server = express()
 
-//* Middlewares */
+// Middlewares
 server.use(morgan('dev'));
-server.options("*", cors());
+
 server.use(cors({
     origin: [
         "https://novedades-three.vercel.app",
@@ -16,6 +16,9 @@ server.use(cors({
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
 }));
+
+server.options("*", cors()); // <- va DESPUÉS del cors principal
+
 server.use(express.json());
 
 server.use(router)
