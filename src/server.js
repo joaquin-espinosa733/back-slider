@@ -12,7 +12,8 @@ server.use(cors({
     origin: [
         "https://novedades-three.vercel.app",
         "https://panel-slider.vercel.app",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "http://127.0.0.1:5500",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
 }));
