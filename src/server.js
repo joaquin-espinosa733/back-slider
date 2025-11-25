@@ -7,6 +7,7 @@ const server = express()
 
 //* Middlewares */
 server.use(morgan('dev'));
+server.options("*", cors());
 server.use(cors({
     origin: [
         "https://novedades-three.vercel.app",
