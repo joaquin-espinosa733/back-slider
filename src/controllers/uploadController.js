@@ -35,7 +35,7 @@ exports.uploadVideo = async (req, res) => {
       Bucket: BUCKET_NAME,
       Key: `videos/${fileName}`,
       Body: fileContent,
-      ContentType: req.file.mimetype,
+      ContentType: "video/mp4",
     };
 
     const data = await s3.upload(params).promise();
