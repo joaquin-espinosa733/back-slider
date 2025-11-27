@@ -3,7 +3,7 @@ const morgan = require('morgan')
 const cors = require('cors')
 const router = require('./routes')
 
-const server = express()
+const server = express();
 
 // Middlewares
 server.use(morgan('dev'));
