@@ -10,6 +10,7 @@ server.use(morgan('dev'));
 
 server.use(cors({
     origin: [
+        "https://mgestudiografico.com",
         "https://novedades-three.vercel.app",
         "https://panel-slider.vercel.app",
         "http://localhost:3000",
