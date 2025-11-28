@@ -1,21 +1,29 @@
+// uploadVideo.js (migrado a AWS SDK v3)
+
 const fs = require("fs");
-const AWS = require("aws-sdk");
 const path = require("path");
 const dotenv = require("dotenv");
 const Videos = require("../models/Videos");
 
+// Import v3
+const {
+  S3Client,
+  PutObjectCommand,
+} = require("@aws-sdk/client-s3");
+
 dotenv.config();
 
-const endpoint = new AWS.Endpoint(process.env.R2_ENDPOINT);
-
-const s3 = new AWS.S3({
-  endpoint,
-  accessKeyId: process.env.R2_ACCESS_KEY_ID,
-  secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  signatureVersion: "v4",
+// Endpoint R2
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: process.env.R2_ENDPOINT,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  }
 });
 
-const BUCKET_NAME = "videos"; 
+const BUCKET_NAME = "videos";
 const publicBase = process.env.R2_ENDPOINT_PUBLICA;
 
 exports.uploadVideo = async (req, res) => {
@@ -23,14 +31,13 @@ exports.uploadVideo = async (req, res) => {
     if (!req.file)
       return res.status(400).json({ error: "No se envió ningún archivo" });
 
-    // ✔️ Definir la ruta del archivo temporal
+    // Archivo temporal
     const filePath = req.file.path;
-
-    // ✔️ Leer contenido desde disco
     const fileContent = fs.readFileSync(filePath);
 
     const fileName = `${Date.now()}-${req.file.originalname}`;
 
+    // Parámetros para subir
     const params = {
       Bucket: BUCKET_NAME,
       Key: `videos/${fileName}`,
@@ -38,9 +45,10 @@ exports.uploadVideo = async (req, res) => {
       ContentType: "video/mp4",
     };
 
-    const data = await s3.upload(params).promise();
+    // Subir a R2
+    await s3.send(new PutObjectCommand(params));
 
-    // ✔️ Guardar en BD
+    // Guardar en MongoDB
     const newVideo = new Videos({
       title: req.body.title || req.file.originalname,
       url: `${publicBase}/${params.Key}`,
@@ -50,11 +58,11 @@ exports.uploadVideo = async (req, res) => {
 
     await newVideo.save();
 
-    // ✔️ Borrar archivo temporal
+    // Borrar archivo temporal
     fs.unlinkSync(filePath);
 
     res.json({
-      message: "✅ Video subido correctamente a Cloudflare R2",
+      message: "✅ Video subido correctamente a R2 (SDK v3)",
       video: newVideo,
     });
   } catch (error) {
