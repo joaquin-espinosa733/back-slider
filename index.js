@@ -1,4 +1,4 @@
-const { testConnection } = require('./src/r2');
+const { testConnection } = require('./src/lib/r2');
 const server = require('./src/server');
 const { connectDB } = require('./src/db/db');
 
