@@ -9,5 +9,9 @@ const port = process.env.PORT || 3000;
     await connectDB();
     server.get('/', (req, res) => res.send('Hello World!'));
 
+    server.get("/health", (req, res) => {
+        res.status(200).json({ status: "ok" });
+    });
+
     server.listen(port, () => console.log(`🚀 App listening on port ${port}!`));
 })();
