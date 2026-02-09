@@ -24,8 +24,8 @@ server.use(cors({
 
 
 // server.options("*", cors()); // <- va DESPUÉS del cors principal
-
-server.use(express.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 server.use(router)
 

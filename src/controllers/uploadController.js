@@ -1,72 +1,98 @@
-// uploadVideo.js (migrado a AWS SDK v3)
+// uploadVideo.js (TODO EN UNO – R2 + Mongo)
 
-const fs = require("fs");
-const path = require("path");
 const dotenv = require("dotenv");
 const Videos = require("../models/Videos");
 
-// Import v3
 const {
   S3Client,
   PutObjectCommand,
 } = require("@aws-sdk/client-s3");
 
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+
 dotenv.config();
 
-// Endpoint R2
+// R2 Client
 const s3 = new S3Client({
   region: "auto",
   endpoint: process.env.R2_ENDPOINT,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  }
+  },
 });
 
 const BUCKET_NAME = "videos";
 const publicBase = process.env.R2_ENDPOINT_PUBLICA;
 
+/**
+ * 1️⃣ Genera URL firmada
+ * 2️⃣ Devuelve key + url pública
+ */
 exports.uploadVideo = async (req, res) => {
   try {
-    if (!req.file)
-      return res.status(400).json({ error: "No se envió ningún archivo" });
+    const { fileName, contentType, title, slider } = req.body;
 
-    // Archivo temporal
-    const filePath = req.file.path;
-    const fileContent = fs.readFileSync(filePath);
+    if (!fileName || !contentType) {
+      return res.status(400).json({ error: "Faltan datos del archivo" });
+    }
 
-    const fileName = `${Date.now()}-${req.file.originalname}`;
+    const key = `videos/${Date.now()}-${fileName}`;
 
-    // Parámetros para subir
-    const params = {
+    const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
-      Key: `videos/${fileName}`,
-      Body: fileContent,
-      ContentType: "video/mp4",
-    };
+      Key: key,
+      ContentType: contentType,
+    });
 
-    // Subir a R2
-    await s3.send(new PutObjectCommand(params));
+    const uploadUrl = await getSignedUrl(s3, command, {
+      expiresIn: 60 * 5, // 5 min
+    });
 
-    // Guardar en MongoDB
+    // ⚠️ NO guardamos aún en Mongo
+    // Primero el front sube el archivo
+
+    res.json({
+      uploadUrl,
+      key,
+      publicUrl: `${publicBase}/${key}`,
+      title: title || fileName,
+      slider: slider ?? null,
+    });
+
+  } catch (error) {
+    console.error("❌ Error generando upload:", error);
+    res.status(500).json({ error: "Error generando upload" });
+  }
+};
+
+/**
+ * 3️⃣ Guarda metadata en Mongo (cuando el upload ya terminó)
+ */
+exports.confirmUpload = async (req, res) => {
+  try {
+    const { title, url, key, slider } = req.body;
+
+    if (!url || !key) {
+      return res.status(400).json({ error: "Datos incompletos" });
+    }
+
     const newVideo = new Videos({
-      title: req.body.title || req.file.originalname,
-      url: `${publicBase}/${params.Key}`,
-      key: params.Key,
-      slider: req.body.slider || null,
+      title,
+      url,
+      key,
+      slider,
     });
 
     await newVideo.save();
 
-    // Borrar archivo temporal
-    fs.unlinkSync(filePath);
-
     res.json({
-      message: "✅ Video subido correctamente a R2 (SDK v3)",
+      message: "✅ Video registrado correctamente",
       video: newVideo,
     });
+
   } catch (error) {
-    console.error("❌ Error al subir el video:", error);
-    res.status(500).json({ error: "Error al subir el video" });
+    console.error("❌ Error guardando video:", error);
+    res.status(500).json({ error: "Error guardando video" });
   }
 };
