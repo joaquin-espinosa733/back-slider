@@ -1,3 +1,6 @@
+const Videos = require("../models/Videos");
+
+
 const getSliderVideosController = async (req, res) => {
   try {
     const videos = await Videos

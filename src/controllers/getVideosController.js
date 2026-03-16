@@ -1,7 +1,5 @@
 const Videos = require("../models/Videos");
 
-
-
 // Obtener todos los videos
 const getVideosController = async (req, res) => {
     try {
